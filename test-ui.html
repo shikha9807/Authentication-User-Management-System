@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F1620;
+    --panel:#161F2C;
+    --panel-2:#1C2733;
+    --line:#2A3644;
+    --ink:#E8ECF1;
+    --dim:#8A97A6;
+    --gold:#D9A441;
+    --gold-dim:#5A491F;
+    --green:#3FAE6A;
+    --green-dim:#1E3A28;
+    --red:#E2574C;
+    --red-dim:#3A2020;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding:40px 20px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  .masthead{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+    margin-bottom:28px;
+  }
+  .masthead h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.3px;
+    margin:0 0 4px;
+  }
+  .masthead p{margin:0;color:var(--dim);font-size:13px;}
+  .badge{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 16px;
+    min-width:190px;
+  }
+  .led{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--red);
+    box-shadow:0 0 0 3px var(--red-dim);
+    flex-shrink:0;
+    transition:background .2s, box-shadow .2s;
+  }
+  .led.on{background:var(--green);box-shadow:0 0 0 3px var(--green-dim);}
+  .badge-text{font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.5;}
+  .badge-text .state{font-weight:500;color:var(--ink);}
+  .badge-text .ttl{color:var(--dim);}
+  .grid{display:grid;grid-template-columns:220px 1fr;gap:24px;}
+  @media (max-width:700px){.grid{grid-template-columns:1fr;}}
+  nav{display:flex;flex-direction:column;gap:4px;}
+  nav button{
+    all:unset;
+    cursor:pointer;
+    padding:10px 14px;
+    border-radius:6px;
+    font-size:14px;
+    color:var(--dim);
+    border-left:2px solid transparent;
+  }
+  nav button:hover{background:var(--panel);color:var(--ink);}
+  nav button.active{
+    background:var(--panel-2);
+    color:var(--gold);
+    border-left:2px solid var(--gold);
+    font-weight:500;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:24px;
+  }
+  .panel h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:17px;
+    margin:0 0 4px;
+    font-weight:600;
+  }
+  .panel .sub{color:var(--dim);font-size:13px;margin:0 0 20px;}
+  label{display:block;font-size:12px;color:var(--dim);margin:14px 0 6px;}
+  input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--ink);
+    padding:10px 12px;
+    border-radius:6px;
+    font-size:14px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  input:focus{outline:none;border-color:var(--gold);}
+  .row{display:flex;gap:12px;}
+  .row > div{flex:1;}
+  button.action{
+    all:unset;
+    cursor:pointer;
+    margin-top:20px;
+    display:inline-block;
+    background:var(--gold);
+    color:#241a05;
+    font-weight:600;
+    font-size:14px;
+    padding:10px 20px;
+    border-radius:6px;
+  }
+  button.action:hover{background:#e8b455;}
+  button.action.danger{background:var(--red);color:#3a0e0a;}
+  button.action.danger:hover{background:#eb6d63;}
+  button.action.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  button.action.ghost:hover{border-color:var(--dim);}
+  .actions-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .console{
+    margin-top:20px;
+    background:#0B1119;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px 16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    line-height:1.6;
+    max-height:280px;
+    overflow:auto;
+    white-space:pre-wrap;
+    word-break:break-all;
+  }
+  .console .ok{color:var(--green);}
+  .console .err{color:var(--red);}
+  .console .muted{color:var(--dim);}
+  .hint{font-size:12px;color:var(--dim);margin-top:10px;}
+  .hint code{background:var(--panel-2);padding:1px 5px;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Auth console</h1>
+      <p>Manual test panel for your JWT + Redis + Postgres API</p>
+    </div>
+    <div class="badge">
+      <div class="led" id="led"></div>
+      <div class="badge-text">
+        <div class="state" id="sessionState">No active session</div>
+        <div class="ttl" id="sessionTtl">&nbsp;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <nav>
+      <button class="nav-btn active" data-tab="register">Register</button>
+      <button class="nav-btn" data-tab="login">Login</button>
+      <button class="nav-btn" data-tab="profile">Profile</button>
+      <button class="nav-btn" data-tab="session">Session</button>
+    </nav>
+
+    <div>
+      <div class="panel" data-panel="register">
+        <h2>Create an account</h2>
+        <p class="sub">Registers a new user against <code>/api/auth/register</code>.</p>
+        <label for="r-email">Email</label>
+        <input id="r-email" type="email" placeholder="name@example.com" value="jane@example.com">
+        <div class="row">
+          <div>
+            <label for="r-first">First name</label>
+            <input id="r-first" type="text" placeholder="Jane" value="Jane">
+          </div>
+          <div>
+            <label for="r-last">Last name</label>
+            <input id="r-last" type="text" placeholder="Doe">
+          </div>
+        </div>
+        <label for="r-password">Password</label>
+        <input id="r-password" type="password" placeholder="At least 8 characters, 1 letter, 1 number" value="Sup3rSecret1">
+        <button class="action" onclick="doRegister()">Create account</button>
+        <div class="console" id="r-out">Waiting for a request…</div>
+      </div>
+
+      <div class="panel" data-panel="login" style="display:none;">
+        <h2>Log in</h2>
+        <p class="sub">Issues an access token and sets the refresh cookie.</p>
+        <label for="l-email">Email</label>
+        <input id="l-email" type="email" placeholder="name@example.com" value="jane@example.com">
+        <label for="l-password">Password</label>
+        <input id="l-password" type="password" placeholder="Password" value="Sup3rSecret1">
+        <button class="action" onclick="doLogin()">Log in</button>
+        <div class="console" id="l-out">Waiting for a request…</div>
+      </div>
+
+      <div class="panel" data-panel="profile" style="display:none;">
+        <h2>Your profile</h2>
+        <p class="sub">Calls the protected <code>/api/auth/me</code> route using the stored access token.</p>
+        <button class="action" onclick="doProfile()">Fetch profile</button>
+        <div class="console" id="p-out">Log in first, then fetch your profile.</div>
+      </div>
+
+      <div class="panel" data-panel="session" style="display:none;">
+        <h2>Session controls</h2>
+        <p class="sub">Rotate your access token or end the session.</p>
+        <div class="actions-row">
+          <button class="action ghost" onclick="doRefresh()">Refresh token</button>
+          <button class="action danger" onclick="doLogout()">Log out</button>
+        </div>
+        <div class="console" id="s-out">No session actions yet.</div>
+        <p class="hint">Refresh rotates the token and cookie. Logout revokes both immediately &mdash; try fetching your profile again afterward to see it fail.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint" id="corsHint">Serve this file from <code>http://localhost:3000</code> (matching <code>CLIENT_ORIGIN</code> in your <code>.env</code>) so the API's CORS policy allows it &mdash; e.g. <code>python3 -m http.server 3000</code> from this folder, then open <code>http://localhost:3000/test-ui.html</code>.</p>
+
+</div>
+
+<script>
+  const API = 'http://localhost:4000';
+  let accessToken = null;
+  let tokenExpiresAt = null;
+  let ttlInterval = null;
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('[data-panel]').forEach(p => {
+        p.style.display = p.dataset.panel === tab ? 'block' : 'none';
+      });
+    });
+  });
+
+  function log(elId, label, ok, data){
+    const el = document.getElementById(elId);
+    const cls = ok ? 'ok' : 'err';
+    const body = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    el.innerHTML = '<span class="' + cls + '">' + label + '</span>\n<span class="muted">' + body + '</span>';
+  }
+
+  function decodeJwtExp(token){
+    try{
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp ? payload.exp * 1000 : null;
+    }catch(e){ return null; }
+  }
+
+  function setSession(token){
+    accessToken = token;
+    tokenExpiresAt = token ? decodeJwtExp(token) : null;
+    updateBadge();
+    if (ttlInterval) clearInterval(ttlInterval);
+    if (token) ttlInterval = setInterval(updateBadge, 1000);
+  }
+
+  function updateBadge(){
+    const led = document.getElementById('led');
+    const state = document.getElementById('sessionState');
+    const ttl = document.getElementById('sessionTtl');
+    if (!accessToken || !tokenExpiresAt || Date.now() >= tokenExpiresAt){
+      led.classList.remove('on');
+      state.textContent = 'No active session';
+      ttl.innerHTML = '&nbsp;';
+      if (accessToken && Date.now() >= tokenExpiresAt){
+        accessToken = null;
+        if (ttlInterval) clearInterval(ttlInterval);
+      }
+      return;
+    }
+    led.classList.add('on');
+    state.textContent = 'Session active';
+    const secs = Math.max(0, Math.round((tokenExpiresAt - Date.now())/1000));
+    const m = Math.floor(secs/60), s = secs%60;
+    ttl.textContent = 'expires in ' + m + 'm ' + String(s).padStart(2,'0') + 's';
+  }
+
+  async function call(path, options){
+    const res = await fetch(API + path, options);
+    let data;
+    try { data = await res.json(); } catch(e) { data = {}; }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  async function doRegister(){
+    const email = document.getElementById('r-email').value;
+    const password = document.getElementById('r-password').value;
+    const firstName = document.getElementById('r-first').value;
+    const lastName = document.getElementById('r-last').value;
+    log('r-out', 'Sending request…', true, '');
+    try{
+      const { ok, status, data } = await call('/api/auth/register', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email, password, firstName, lastName })
+      });
+      log('r-out', ok ? 'Account created (HTTP ' + status + ')' : 'Failed (HTTP ' + status + ')', ok, data);
+    }catch(e){
+      log('r-out', 'Request failed', false, String(e) + ' — is the API running and CORS-allowed?');
+    }
+  }
+
+  async function doLogin(){
+    const email = document.getElementById('l-email').value;
+    const password = document.getElementById('l-password').value;
+    log('l-out', 'Sending request…', true, '');
+    try{
+      const { ok, status, data } = await call('/api/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email, password })
+      });
+      log('l-out', ok ? 'Logged in (HTTP ' + status + ')' : 'Failed (HTTP ' + status + ')', ok, data);
+      if (ok && data.accessToken) setSession(data.accessToken);
+    }catch(e){
+      log('l-out', 'Request failed', false, String(e));
+    }
+  }
+
+  async function doProfile(){
+    if (!accessToken){
+      log('p-out', 'No access token', false, 'Log in first on the Login tab.');
+      return;
+    }
+    log('p-out', 'Sending request…', true, '');
+    try{
+      const { ok, status, data } = await call('/api/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      });
+      log('p-out', ok ? 'Profile fetched (HTTP ' + status + ')' : 'Failed (HTTP ' + status + ')', ok, data);
+    }catch(e){
+      log('p-out', 'Request failed', false, String(e));
+    }
+  }
+
+  async function doRefresh(){
+    log('s-out', 'Sending request…', true, '');
+    try{
+      const { ok, status, data } = await call('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      log('s-out', ok ? 'Token refreshed (HTTP ' + status + ')' : 'Failed (HTTP ' + status + ')', ok, data);
+      if (ok && data.accessToken) setSession(data.accessToken);
+    }catch(e){
+      log('s-out', 'Request failed', false, String(e));
+    }
+  }
+
+  async function doLogout(){
+    log('s-out', 'Sending request…', true, '');
+    try{
+      const { ok, status, data } = await call('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}
+      });
+      log('s-out', ok ? 'Logged out (HTTP ' + status + ')' : 'Failed (HTTP ' + status + ')', ok, data);
+      if (ok) setSession(null);
+    }catch(e){
+      log('s-out', 'Request failed', false, String(e));
+    }
+  }
+
+  updateBadge();
+</script>
+</body>
+</html>
