@@ -9,7 +9,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import { checkDbConnection } from './config/db.js';
-import { checkRedisConnection } from './config/redis.js';
+//import { checkRedisConnection } from './config/redis.js';
 
 dotenv.config();
 
@@ -28,12 +28,12 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.get('/health', async (req, res) => {
   const status = { server: 'ok', database: 'unknown', redis: 'unknown' };
-  try {
-    await checkDbConnection();
-    status.database = 'ok';
-  } catch {
-    status.database = 'error';
-  }
+  //try {
+    //await checkDbConnection();
+    //status.database = 'ok';
+ // } catch {
+   // status.database = 'error';
+ // }
   try {
     await checkRedisConnection();
     status.redis = 'ok';
